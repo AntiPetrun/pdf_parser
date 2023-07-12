@@ -1,18 +1,58 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .serializers import PDFParseSerializer
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
 from .pdf_parser import parse_pdf
 
 
-class PDFParseView(APIView):
-    def post(self, request):
-        serializer = PDFParseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        pdf_file = serializer.validated_data['pdf_file']
+@csrf_exempt
+def view_txt_files(request):
+    """
+    Send a request with txt file in body to the server to retrieve the content of the file
+    :param request: POST request
+    :body: txt file
+    :return: JSON serialization ->'str'
+    """
+    if request.method == 'POST':
+        file = request.FILES['file']  # Text File.txt <class 'django.core.files.uploadedfile.InMemoryUploadedFile'>
+        content = file.read().decode('utf-8')  # human readable content
+        serialized_content = json.dumps(content)  # JSON serialization ->'str'
+        return HttpResponse(serialized_content)
+    else:
+        return HttpResponse('Invalid request method')
 
-        # Assuming you have a 'media' directory in your Django project's root
-        file_path = pdf_file.path
 
-        parsed_text = parse_pdf(file_path)
+@csrf_exempt
+def view_pdf_file(request):
+    """
+    Send a request with pdf file in body to the server to retrieve the pdf file as it is
+    :param request: POST request
+    :body: pdf file
+    :return: PDF file
+    """
+    if request.method == 'POST':
+        file = request.FILES['file']
+        content = file.read()
+        response = HttpResponse(content, content_type='application/pdf')
+        print(response)
+        response['Content-Disposition'] = 'attachment; filename="file.pdf"'
+        print(response.items())
+        return response
+    else:
+        return HttpResponse('Invalid request method')
 
-        return Response({'parsed_text': parsed_text})
+
+@csrf_exempt
+def view_locally_upload_file(request, *args, **kwargs):
+    """
+    Send a request to the server to retrieve the content of a pdf file
+    :param request: POST request
+    :body: none
+    :return: content of a pdf file
+    """
+    if request.method == 'POST':
+        file_path = '/home/anti/PycharmProjects/pdf_parser/media/cv.pdf'  # <- sent your path to the file here
+        text = parse_pdf(file_path)
+        response = HttpResponse(text, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="file.txt"'
+        return response
