@@ -50,8 +50,8 @@ def view_locally_upload_file(request, *args, **kwargs):
     :body: none
     :return: content of a pdf file
     """
-    if request.method == 'POST':
-        file_path = '/home/anti/PycharmProjects/pdf_parser/media/cv.pdf'  # <- sent your path to the file here
+    if request.method == 'POST':  # <- sent your path to the file here below
+        file_path = '/path/to/file.pdf'
         text = parse_pdf(file_path)
         response = HttpResponse(text, content_type='text/plain')
         response['Content-Disposition'] = 'attachment; filename="file.txt"'
